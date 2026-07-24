@@ -1,0 +1,209 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink-950 font-body text-white antialiased;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== 顶部安全区设计规范 =====
+   所有真实手机都有刘海/打孔/灵动岛：顶部是系统区，交互元素不进入。
+   1) 真实设备：标题栏用 env(safe-area-inset-top) 避让（下方规则）；
+   2) 桌面机身模拟：≥540px 媒体查询内统一 46px 避让模拟灵动岛；
+   3) 布局约定：顶部动作按钮只贴左右两边（中间让位灵动岛），
+      主要操作按钮一律沉底（拇指可达区）。 */
+header {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* 动画 */
+@keyframes count-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out both;
+  }
+  .animate-slide-up {
+    animation: slide-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* ===== 桌面端「iPhone 17 Pro Max」机身：让 demo 呈现真实手机 App 观感 ===== */
+@media (min-width: 540px) {
+  body {
+    background:
+      radial-gradient(1000px 500px at 50% -10%, rgba(212, 255, 63, 0.07), transparent 60%),
+      radial-gradient(800px 500px at 85% 110%, rgba(96, 165, 250, 0.05), transparent 60%),
+      #04050a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #root {
+    position: relative;
+    /* 锁定 iPhone 17 Pro Max 长宽比（440×956），宽度随窗口高度自适应，永远不变形 */
+    width: min(440px, 96vw, calc((100dvh - 32px) * 0.4607));
+    height: auto; /* 覆盖全局 #root{height:100%}，交给 aspect-ratio 推导 */
+    aspect-ratio: 440 / 956;
+    border-radius: 64px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    outline: 12px solid #0d0f16;
+    box-shadow:
+      0 50px 100px rgba(0, 0, 0, 0.65),
+      0 0 80px rgba(212, 255, 63, 0.06);
+    overflow: hidden;
+    scrollbar-width: none;
+    /* 关键：让 position:fixed 的子元素（TabBar/模态/横幅）相对机身定位，而不是浏览器窗口 */
+    transform: translateZ(0);
+  }
+
+  #root::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 滚动只发生在内层容器：TabBar/浮动按钮/弹层是机身固定元素，不随内容滚动 */
+  #root .animate-fade-in {
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  #root .animate-fade-in::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 机身内所有按视口高度计算的尺寸，一律改为相对机身高度（修复底栏/浮动按钮/弹层错位） */
+  #root .min-h-dvh,
+  #root .min-h-screen {
+    min-height: 100%;
+  }
+  #root .h-dvh,
+  #root .h-screen {
+    height: 100%;
+  }
+  #root .h-\[78dvh\] {
+    height: 78%;
+  }
+  #root .min-h-\[52dvh\] {
+    min-height: 52%;
+  }
+  #root .min-h-\[60dvh\] {
+    min-height: 60%;
+  }
+  #root .max-h-\[42dvh\] {
+    max-height: 42%;
+  }
+
+  /* 灵动岛 */
+  #root::before {
+    content: '';
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    width: 122px;
+    height: 34px;
+    border-radius: 999px;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transform: translateX(-50%);
+    z-index: 60;
+    pointer-events: none;
+  }
+
+  /* Home 指示条 */
+  #root::after {
+    content: '';
+    position: fixed;
+    bottom: 7px;
+    left: 50%;
+    width: 134px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateX(-50%);
+    z-index: 60;
+    pointer-events: none;
+  }
+
+  /* ===== 圆角机身安全区：内容避让圆角 / 灵动岛 / Home 指示条 ===== */
+  /* 顶部标题栏：为状态栏、灵动岛与顶部圆角留出空间（灵动岛底边 = 46px） */
+  #root header {
+    height: auto;
+    min-height: 3.5rem;
+    padding-top: 46px;
+  }
+  /* 底部 TabBar 与固定底栏：抬离底部圆角与 Home 指示条 */
+  #root nav {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 14px);
+  }
+  #root .fixed.bottom-0 {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 14px);
+  }
+  /* 训练页顶部 HUD：避让灵动岛 */
+  #root .live-topbar {
+    padding-top: 46px;
+  }
+}
